@@ -363,6 +363,31 @@
       syncMineIntoBoard();renderMyCourseBoard();renderCommunityBoard();
     };
     document.getElementById('saveCourseButton').onclick=()=>window.registerCourseNow();
+
+    /* Chrome에서도 뒤의 첫 화면이 절대 비치지 않도록 강제로 전체 화면 처리. */
+    const beachOpenBase=openBeachMain;
+    openBeachMain=function(name){
+      beachOpenBase(name);
+      const focus=document.getElementById('beachFocus');
+      document.querySelector('.app').classList.add('screen-hidden');
+      Object.assign(focus.style,{display:'block',position:'fixed',top:'0',right:'0',bottom:'0',left:'0',width:'100vw',height:'100dvh',minHeight:'100vh',zIndex:'999999',overflowY:'auto',background:'#f7fbff'});
+      window.scrollTo(0,0);
+    };
+    closeBeachMain=function(){
+      const focus=document.getElementById('beachFocus');
+      focus.classList.remove('active');focus.removeAttribute('style');
+      document.querySelector('.app').classList.remove('screen-hidden');document.body.style.overflow='';
+    };
+
+    /* A saved course starts with a clean form next time. */
+    const registerAndClear=window.registerCourseNow;
+    window.registerCourseNow=async function(){
+      await registerAndClear();
+      document.getElementById('courseNameInput').value='';
+      document.getElementById('placeInput').value='';
+      window.customStops=null;
+    };
+    document.getElementById('saveCourseButton').onclick=()=>window.registerCourseNow();
   </script>
 </body>
 </html>
