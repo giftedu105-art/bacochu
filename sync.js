@@ -228,6 +228,33 @@
       if (recommendation) recommendation.textContent = active.length ? active.join(' \u00b7 ') : '\uc131\ud5a5\uc744 \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.';
     };
   }
+  function installSharedLikes() {
+    window.toggleCourseLike = async function (id) {
+      var course = (communityCourses || []).find(function (item) { return item.id === id; });
+      if (!course || !id) return;
+      var flag = 'bacochu-liked-course-' + id;
+      var liked = localStorage.getItem(flag) === 'true';
+      var nextLikes = Math.max(0, Number(course.likes || 0) + (liked ? -1 : 1));
+      var updated = Object.assign({}, course, { likes: nextLikes });
+      try {
+        var response = await fetch(endpoint + '/' + id + '?key=' + apiKey, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fields: {
+            payload: { stringValue: JSON.stringify(updated) },
+            createdAt: { integerValue: String(updated.createdAt || Date.now()) }
+          } })
+        });
+        if (!response.ok) throw new Error('like');
+        course.likes = nextLikes;
+        localStorage.setItem(flag, String(!liked));
+        if (typeof renderCommunityBoard === 'function') renderCommunityBoard();
+        if (typeof renderMyCourseBoard === 'function') renderMyCourseBoard();
+      } catch (error) {
+        alert('Like sync failed. Please try again.');
+      }
+    };
+  }
   window.addEventListener('load', function () { setTimeout(bind, 300); });
-  setTimeout(function () { bind(); installBeachRecommendationFilter(); installMultiTraitSelection(); }, 1200);
+  setTimeout(function () { bind(); installBeachRecommendationFilter(); installMultiTraitSelection(); installSharedLikes(); }, 1200);
 }());
