@@ -188,6 +188,29 @@
       setTimeout(async()=>{closeView('courseView');document.body.style.overflow='hidden';await applyCourseToFocus(course)},250);
     };
   </script>
+  <script>
+    courseTraitGroups[2][1] += ',쇼핑';
+    filterData[2][1] += ',쇼핑';
+    function shortReview(course){
+      const tags=(course.traits||[]).slice(0,3).join(' · ') || '바다 여행';
+      const first=(course.stops||[]).slice(0,2).map(stop=>stop[0]).join(' → ');
+      return `${tags} 취향을 위한 ${first||'부산 바다'} 코스예요.`;
+    }
+    courseCard=function(course,owned=false){return `<article class="board-card"><b>${course.title}</b><small>${course.meta}</small><p style="margin:10px 0;color:#5d7292;font-size:13px;line-height:1.5">${shortReview(course)}</p><div class="board-meta"><span>📍 ${course.stops?.length||0}곳</span><span>·</span><span>🏷️ ${(course.traits||[]).slice(0,3).join(' · ')||'바다 여행'}</span></div><div class="board-actions">${owned?`<button class="like" onclick="viewMyCourse('${course.id}')">지도 보기</button><button class="like" onclick="deleteMyCourse('${course.id}')">삭제</button>`:`<button class="like" onclick="likeCommunityCourse('${course.id}')">♥ ${course.likes||0}</button><button class="like" onclick="viewMyCourse('${course.id}')">지도 보기</button>`}</div></article>`};
+    window.registerCourseNow=async function(){
+      const status=document.getElementById('searchStatus');
+      if(!window.customStops?.length){status.textContent='먼저 장소를 찾고 경로를 그려주세요.';return}
+      const traits=selectedTraits('registerTraitPanel');
+      if(!traits.length){status.textContent='성향을 하나 이상 선택해 주세요.';return}
+      const course={id:`mine-${Date.now()}`,title:document.getElementById('courseNameInput').value.trim()||`${selectedBeachName} 나의 바다 코스`,meta:window.customStops.map(stop=>stop[0]).join(' · '),stops:window.customStops,traits,likes:0};
+      const saved=JSON.parse(localStorage.getItem('bacochu-my-courses')||'[]');saved.unshift(course);localStorage.setItem('bacochu-my-courses',JSON.stringify(saved));
+      communityCourses=[course,...communityCourses.filter(item=>item.id!==course.id)];
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify([course.id,...myCourseIds()]));
+      renderMyCourseBoard();renderCommunityBoard();status.textContent='등록 완료! 지도에 경로를 표시합니다.';
+      setTimeout(async()=>{closeView('courseView');document.body.style.overflow='hidden';await applyCourseToFocus(course)},250);
+    };
+    document.getElementById('saveCourseButton').onclick=()=>window.registerCourseNow();
+  </script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, increment, orderBy, query } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
