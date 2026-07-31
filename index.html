@@ -304,5 +304,65 @@
     };
     window.loadCommunityCourses();
   </script>
+  <script>
+    /* Final client-side safeguards: keep this device's courses visible even
+       when the shared-board request finishes later. */
+    function savedMine(){
+      const keys=['bacochu-my-courses','bacochu-local-registered-courses'];
+      const byId=new Map();
+      keys.forEach(key=>{try{JSON.parse(localStorage.getItem(key)||'[]').forEach(course=>{if(course&&course.id)byId.set(course.id,course)})}catch{}});
+      return [...byId.values()];
+    }
+    function syncMineIntoBoard(){
+      const mine=savedMine();
+      const ids=[...new Set([...mine.map(course=>course.id),...myCourseIds()])];
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify(ids));
+      communityCourses=[...mine,...(communityCourses||[]).filter(course=>!mine.some(saved=>saved.id===course.id))];
+      return mine;
+    }
+    getMyCourses=function(){return syncMineIntoBoard()};
+    const renderMineBoardBase=renderMyCourseBoard;
+    const renderBoardBase=renderCommunityBoard;
+    renderMyCourseBoard=function(){syncMineIntoBoard();return renderMineBoardBase()};
+    renderCommunityBoard=function(){syncMineIntoBoard();return renderBoardBase()};
+    loadCommunityCourses=async function(){syncMineIntoBoard();renderMyCourseBoard();renderCommunityBoard()};
+
+    /* One answer per category: choosing a new chip replaces the previous one. */
+    toggleCourseTrait=function(button,target){
+      const group=button.closest('.choices');
+      group.querySelectorAll('.choice').forEach(item=>item.classList.remove('active'));
+      button.classList.add('active');
+      if(target==='applyTraits'){
+        localStorage.setItem('bacochu-viewer-traits',JSON.stringify(selectedTraits(target)));
+        setupCourse();document.getElementById('routeCards').style.display='grid';
+      }
+    };
+    toggleChoice=function(button){
+      const group=button.closest('.choices');
+      group.querySelectorAll('.choice').forEach(item=>item.classList.remove('active'));
+      button.classList.add('active');
+      const active=[...document.querySelectorAll('#filterView .choice.active')].map(item=>item.textContent);
+      document.getElementById('recommendation').textContent=active.length?`${active.slice(0,3).join(' · ')} 취향에는 송정 해변 산책 → 오션뷰 카페 → 청사포 노을 코스를 추천해요.`:'선택한 성향을 바탕으로 나에게 맞는 바다 하루를 추천해 드릴게요.';
+    };
+
+    function savedLikeCounts(){try{return JSON.parse(localStorage.getItem('bacochu-course-like-counts')||'{}')}catch{return{}}}
+    function courseLikeCount(course){const counts=savedLikeCounts();return Math.max(course.likes||0,counts[course.id]||0)}
+    window.toggleCourseLike=function(id){
+      const course=communityCourses.find(item=>item.id===id);if(!course)return;
+      const key=`bacochu-liked-course-${id}`;const liked=localStorage.getItem(key)==='true';
+      const counts=savedLikeCounts();const current=courseLikeCount(course);counts[id]=Math.max(0,current+(liked?-1:1));
+      localStorage.setItem('bacochu-course-like-counts',JSON.stringify(counts));localStorage.setItem(key,String(!liked));
+      course.likes=counts[id];renderCommunityBoard();renderMyCourseBoard();
+    };
+    courseCard=function(course,owned=false){const likes=courseLikeCount(course);return `<article class="board-card"><b>${course.title}</b><small>${course.meta}</small><p style="margin:10px 0;color:#5d7292;font-size:13px">${shortReview(course)}</p><div class="board-meta"><span>📍 ${course.stops?.length||0}곳</span><span>·</span><span>🏷️ ${(course.traits||[]).slice(0,3).join(' · ')||'바다 여행'}</span></div><div class="board-actions"><button class="like" onclick="window.openBoardCourseDetail('${course.id}')">코스 자세히</button><button class="like" onclick="window.toggleCourseLike('${course.id}')">♥ ${likes}</button>${owned?`<button class="like" onclick="deleteMyCourse('${course.id}')">삭제</button>`:''}</div></article>`};
+    const savedRegister=window.registerCourseNow;
+    window.registerCourseNow=async function(){
+      await savedRegister();
+      const mine=savedMine();
+      localStorage.setItem('bacochu-local-registered-courses',JSON.stringify(mine));
+      syncMineIntoBoard();renderMyCourseBoard();renderCommunityBoard();
+    };
+    document.getElementById('saveCourseButton').onclick=()=>window.registerCourseNow();
+  </script>
 </body>
 </html>
