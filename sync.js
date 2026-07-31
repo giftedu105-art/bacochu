@@ -134,9 +134,12 @@
   function belongsToCurrentBeach(course) {
     var selected = normalize(window.selectedBeachName);
     if (!selected) return true;
-    if (course && course.beach) return normalize(course.beach) === selected;
-    var firstStop = course && course.stops && course.stops[0] ? course.stops[0][0] : '';
-    return normalize(firstStop).indexOf(selected) !== -1 || selected.indexOf(normalize(firstStop)) !== -1;
+    var fields = [course && course.beach, course && course.title, course && course.meta,
+      course && course.stops && course.stops[0] ? course.stops[0][0] : ''];
+    return fields.some(function (field) {
+      var value = normalize(field);
+      return value && (value.indexOf(selected) !== -1 || selected.indexOf(value) !== -1);
+    });
   }
   function isUsableCourse(course) {
     return !!(course && typeof course.title === 'string' && course.title.trim() &&
