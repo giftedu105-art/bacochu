@@ -211,6 +211,22 @@
     };
     document.getElementById('saveCourseButton').onclick=()=>window.registerCourseNow();
   </script>
+  <script>
+    likeCommunityCourse=async function(id){
+      const course=communityCourses.find(item=>item.id===id);if(!course)return;
+      const key=`bacochu-liked-course-${id}`;const liked=localStorage.getItem(key)==='true';
+      course.likes=Math.max(0,(course.likes||0)+(liked?-1:1));localStorage.setItem(key,String(!liked));
+      renderCommunityBoard();renderMyCourseBoard();
+    };
+    courseCard=function(course,owned=false){return `<article class="board-card"><b>${course.title}</b><small>${course.meta}</small><p style="margin:10px 0;color:#5d7292;font-size:13px">${shortReview(course)}</p><div class="board-meta"><span>📍 ${course.stops?.length||0}곳</span><span>·</span><span>🏷️ ${(course.traits||[]).slice(0,3).join(' · ')||'바다 여행'}</span></div><div class="board-actions"><button class="like" onclick="openBoardCourseDetail('${course.id}')">코스 자세히</button><button class="like" onclick="likeCommunityCourse('${course.id}')">♥ ${course.likes||0}</button>${owned?`<button class="like" onclick="deleteMyCourse('${course.id}')">삭제</button>`:''}</div></article>`};
+    window.openBoardCourseDetail=function(id){
+      const course=communityCourses.find(item=>item.id===id);if(!course)return;
+      let view=document.getElementById('boardDetailView');
+      if(!view){view=document.createElement('section');view.id='boardDetailView';view.className='page-view';document.body.appendChild(view)}
+      view.innerHTML=`<div class="view-wrap"><button class="back" onclick="document.getElementById('boardDetailView').classList.remove('active');document.body.style.overflow=''">←</button><h1>${course.title}</h1><p>${shortReview(course)}</p><div class="question"><h3>선택한 여행 성향</h3><div class="chips">${(course.traits||[]).map(tag=>`<span class="chip">#${tag}</span>`).join('')}</div></div><div class="route-preview"><b>방문 순서 · 가게 정보</b>${(course.stops||[]).map((stop,index)=>`<div class="route-step"><span>${index+1}</span><b>${stop[0]}</b><a href="https://map.kakao.com/?q=${encodeURIComponent(stop[0])}" target="_blank" style="display:block;margin:5px 0 0 33px;color:#3388f4;font-size:13px">카카오맵에서 가게 정보 보기 ↗</a></div>`).join('')}</div><button class="primary" onclick="viewMyCourse('${course.id}');document.getElementById('boardDetailView').classList.remove('active')">이 코스를 지도에 적용하기</button></div>`;
+      view.classList.add('active');document.body.style.overflow='hidden';window.scrollTo(0,0);
+    };
+  </script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, increment, orderBy, query } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
