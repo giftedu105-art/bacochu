@@ -492,6 +492,9 @@
       if(!id||!confirm('이 코스를 삭제할까요?'))return;
       try{
         await deleteDoc(doc(sharedStore,'courses',id));
+        ['bacochu-my-courses','bacochu-local-registered-courses'].forEach(key=>{
+          try{localStorage.setItem(key,JSON.stringify(JSON.parse(localStorage.getItem(key)||'[]').filter(course=>course.id!==id)))}catch{}
+        });
         const mine=JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]').filter(savedId=>savedId!==id);
         localStorage.setItem('bacochu-my-course-ids',JSON.stringify(mine));location.reload();
       }catch(error){
