@@ -490,9 +490,15 @@
     };
     window.deleteCourseReliable=async function(id){
       if(!id||!confirm('이 코스를 삭제할까요?'))return;
-      try{await deleteDoc(doc(sharedStore,'courses',id));}catch(error){}
-      const mine=JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]').filter(savedId=>savedId!==id);localStorage.setItem('bacochu-my-course-ids',JSON.stringify(mine));location.reload();
+      try{
+        await deleteDoc(doc(sharedStore,'courses',id));
+        const mine=JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]').filter(savedId=>savedId!==id);
+        localStorage.setItem('bacochu-my-course-ids',JSON.stringify(mine));location.reload();
+      }catch(error){
+        alert('공용 코스를 삭제하지 못했어요. Firebase 권한을 확인해 주세요.');
+      }
     };
+    window.deleteMyCourse=window.deleteCourseReliable;
   </script>
 </body>
 </html>
