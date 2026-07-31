@@ -511,5 +511,79 @@
     window.deleteMyCourse=window.deleteCourseReliable;
     document.querySelectorAll('.beach-option').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>{const focus=document.getElementById('beachFocus');focus.scrollTop=0;window.scrollTo(0,0)},0)));
   </script>
+  <script>
+    /* Firebase REST fallback: works without module loading and syncs devices. */
+    (function(){
+      const endpoint='https://firestore.googleapis.com/v1/projects/bacochu-585cd/databases/(default)/documents/courses';
+      const apiKey='AIzaSyDjhg7tspyih6Esk0290zC8Boxm9PSDBnI';
+      const ownIds=()=>{try{return JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]')}catch{return[]}};
+      const setOwnIds=ids=>localStorage.setItem('bacochu-my-course-ids',JSON.stringify(ids));
+      async function loadShared(){
+        try{
+          const response=await fetch(`${endpoint}?key=${apiKey}`);const data=await response.json();
+          if(!response.ok)return;
+          const remote=(data.documents||[]).map(item=>{try{const course=JSON.parse(item.fields.payload.stringValue);course.id=item.name.split('/').pop();return course}catch{return null}}).filter(Boolean);
+          const local=JSON.parse(localStorage.getItem('bacochu-my-courses')||'[]');
+          communityCourses=[...remote,...local.filter(course=>!remote.some(item=>item.id===course.id))];
+          renderMyCourseBoard();renderCommunityBoard();
+        }catch{}
+      }
+      saveRegisteredCourse=async function(){
+        const status=document.getElementById('searchStatus');const stops=window.customStops;
+        if(!Array.isArray(stops)||stops.length<2){status.textContent='먼저 장소를 찾고 경로를 그려주세요.';return}
+        const traits=[...document.querySelectorAll('#registerTraitPanel .choice.active')].map(item=>item.textContent);
+        if(!traits.length){status.textContent='여행 성향을 한 가지 이상 선택해 주세요.';return}
+        const course={title:document.getElementById('courseNameInput').value.trim()||'나의 바다 코스',meta:stops.map(stop=>stop[0]).join(' · '),stops,traits,likes:0,createdAt:Date.now()};
+        status.textContent='공용 코스 저장 중이에요…';
+        try{
+          const response=await fetch(`${endpoint}?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{payload:{stringValue:JSON.stringify(course)},createdAt:{integerValue:String(course.createdAt)}}})});
+          const data=await response.json();if(!response.ok)throw new Error(data.error?.message||'저장 실패');
+          course.id=data.name.split('/').pop();setOwnIds([course.id,...ownIds().filter(id=>id!==course.id)]);
+          status.textContent='모든 기기에 저장됐어요.';setTimeout(()=>location.reload(),300);
+        }catch(error){status.textContent='공용 저장에 실패했어요. 잠시 후 다시 시도해 주세요.';}
+      };
+      deleteMyCourse=async function(id){
+        if(!id||!confirm('이 코스를 삭제할까요?'))return;
+        try{const response=await fetch(`${endpoint}/${id}?key=${apiKey}`,{method:'DELETE'});if(!response.ok)throw new Error();setOwnIds(ownIds().filter(savedId=>savedId!==id));location.reload()}catch{alert('공용 코스를 삭제하지 못했어요.');}
+      };
+      document.getElementById('saveCourseButton').onclick=()=>saveRegisteredCourse();
+      document.addEventListener('click',event=>{const button=event.target.closest('button');if(button?.textContent.trim()==='삭제'){const id=button.closest('[data-course-id]')?.dataset.courseId;if(id){event.preventDefault();event.stopImmediatePropagation();deleteMyCourse(id)}}},true);
+      loadShared();
+    })();
+  </script>
+  <script>
+    /* ASCII-only shared storage fallback. */
+    (function(){
+      var base='https://firestore.googleapis.com/v1/projects/bacochu-585cd/databases/(default)/documents/courses';
+      var key='AIzaSyDjhg7tspyih6Esk0290zC8Boxm9PSDBnI';
+      function ids(){try{return JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]')}catch(e){return[]}}
+      function setIds(value){localStorage.setItem('bacochu-my-course-ids',JSON.stringify(value))}
+      async function refreshShared(){
+        try{
+          var response=await fetch(base+'?key='+key);var data=await response.json();if(!response.ok)return;
+          var remote=(data.documents||[]).map(function(item){try{var course=JSON.parse(item.fields.payload.stringValue);course.id=item.name.split('/').pop();return course}catch(e){return null}}).filter(Boolean);
+          communityCourses=remote;renderMyCourseBoard();renderCommunityBoard();
+        }catch(e){}
+      }
+      saveRegisteredCourse=async function(){
+        var status=document.getElementById('searchStatus'),stops=window.customStops;
+        if(!Array.isArray(stops)||stops.length<2){status.textContent='Please draw a route first.';return}
+        var traits=Array.from(document.querySelectorAll('#registerTraitPanel .choice.active')).map(function(el){return el.textContent});
+        if(!traits.length){status.textContent='Please choose a travel preference.';return}
+        var course={title:document.getElementById('courseNameInput').value.trim()||'My beach course',meta:stops.map(function(stop){return stop[0]}).join(' / '),stops:stops,traits:traits,likes:0,createdAt:Date.now()};
+        status.textContent='Saving to shared board...';
+        try{
+          var response=await fetch(base+'?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{payload:{stringValue:JSON.stringify(course)},createdAt:{integerValue:String(course.createdAt)}}})});
+          var data=await response.json();if(!response.ok)throw new Error('save');
+          course.id=data.name.split('/').pop();setIds([course.id].concat(ids().filter(function(id){return id!==course.id})));status.textContent='Saved.';setTimeout(function(){location.reload()},300);
+        }catch(e){status.textContent='Shared save failed. Please try again.'}
+      };
+      deleteMyCourse=async function(id){
+        if(!id||!confirm('Delete this course?'))return;
+        try{var response=await fetch(base+'/'+id+'?key='+key,{method:'DELETE'});if(!response.ok)throw new Error('delete');setIds(ids().filter(function(value){return value!==id}));location.reload()}catch(e){alert('Delete failed.')}};
+      document.getElementById('saveCourseButton').onclick=function(){saveRegisteredCourse()};
+      refreshShared();
+    })();
+  </script>
 </body>
 </html>
