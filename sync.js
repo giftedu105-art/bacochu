@@ -138,6 +138,11 @@
     var firstStop = course && course.stops && course.stops[0] ? course.stops[0][0] : '';
     return normalize(firstStop).indexOf(selected) !== -1 || selected.indexOf(normalize(firstStop)) !== -1;
   }
+  function isUsableCourse(course) {
+    return !!(course && typeof course.title === 'string' && course.title.trim() &&
+      typeof course.meta === 'string' && course.meta.trim() &&
+      Array.isArray(course.stops) && course.stops.length >= 2);
+  }
   function installBeachRecommendationFilter() {
     if (!window.setupCourse || window.__beachRecommendationFilterInstalled) return;
     var previousSetup = window.setupCourse;
@@ -151,11 +156,11 @@
       var candidates = [];
       if (typeof routes !== 'undefined') {
         Object.keys(routes).forEach(function (id) {
-          if (belongsToCurrentBeach(routes[id])) candidates.push({ id: id, course: routes[id] });
+          if (isUsableCourse(routes[id]) && belongsToCurrentBeach(routes[id])) candidates.push({ id: id, course: routes[id] });
         });
       }
       (communityCourses || []).forEach(function (course) {
-        if (belongsToCurrentBeach(course)) candidates.push({ id: course.id, course: course });
+        if (isUsableCourse(course) && belongsToCurrentBeach(course)) candidates.push({ id: course.id, course: course });
       });
       var score = function (course) {
         return (course.traits || []).filter(function (trait) { return traits.indexOf(trait) !== -1; }).length;
@@ -165,14 +170,14 @@
       candidates.forEach(function (entry) { activeCourses[entry.id] = entry.course; });
       cards.style.display = 'grid';
       cards.innerHTML = candidates.length ? candidates.map(function (entry, index) {
-        var title = (index === 0 ? '1st priority - ' : '') + entry.course.title;
-        return '<button class="route-card" data-route="' + entry.id + '" onclick="selectRoute(\'' + entry.id + '\')"><b>' + title + '</b><small>' + entry.course.meta + ' - match ' + score(entry.course) + '</small></button>';
-      }).join('') : '<p style="margin:0;color:#738098">No course is registered for this beach yet.</p>';
+        var title = (index === 0 ? '\u0031\uc21c\uc704 \u00b7 ' : '') + entry.course.title;
+        return '<button class="route-card" data-route="' + entry.id + '" onclick="selectRoute(\'' + entry.id + '\')"><b>' + title + '</b><small>' + entry.course.meta + ' \u00b7 \uc131\ud5a5 \uc77c\uce58 ' + score(entry.course) + '\uac1c</small></button>';
+      }).join('') : '<p style="margin:0;color:#738098">\uc774 \ud574\uc218\uc695\uc7a5\uc5d0 \ub4f1\ub85d\ub41c \ucf54\uc2a4\uac00 \uc544\uc9c1 \uc5c6\uc5b4\uc694.</p>';
       if (candidates.length) {
         currentRouteId = candidates[0].id;
         selectRoute(currentRouteId);
       } else if (preview) {
-        preview.innerHTML = '<b>No matching beach course yet.</b><p style="color:#738098;font-size:14px">Register the first course for this beach.</p>';
+        preview.innerHTML = '<b>\uc77c\uce58\ud558\ub294 \ucf54\uc2a4\uac00 \uc544\uc9c1 \uc5c6\uc5b4\uc694.</b><p style="color:#738098;font-size:14px">\uc774 \ud574\uc218\uc695\uc7a5\uc758 \uccab \ubc88\uc9f8 \ucf54\uc2a4\ub97c \ub4f1\ub85d\ud574 \ubcf4\uc138\uc694.</p>';
       }
     };
   }
