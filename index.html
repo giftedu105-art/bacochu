@@ -171,6 +171,23 @@
       setTimeout(async()=>{closeView('courseView');document.body.style.overflow='hidden';await applyCourseToFocus(course)},350);
     };
   </script>
+  <script>
+    /* Final registration handler: this is intentionally a classic script so inline buttons always call it. */
+    saveRegisteredCourse = async function(){
+      const status=document.getElementById('searchStatus');
+      if(!window.customStops?.length){status.textContent='먼저 장소를 찾고 경로를 그려주세요.';return}
+      const traits=selectedTraits('registerTraitPanel');
+      if(!traits.length){status.textContent='여행 성향을 한 가지 이상 선택해 주세요.';return}
+      const course={id:`mine-${Date.now()}`,title:document.getElementById('courseNameInput').value.trim()||`${selectedBeachName} 나의 바다 코스`,meta:window.customStops.map(stop=>stop[0]).join(' · '),stops:window.customStops,traits,likes:0};
+      const mine=JSON.parse(localStorage.getItem('bacochu-my-courses')||'[]');
+      mine.unshift(course);localStorage.setItem('bacochu-my-courses',JSON.stringify(mine));
+      communityCourses=[course,...communityCourses.filter(item=>item.id!==course.id)];
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify([course.id,...myCourseIds()]));
+      renderMyCourseBoard();renderCommunityBoard();
+      status.textContent='내 코스를 등록했어요. 지도에 경로를 표시합니다.';
+      setTimeout(async()=>{closeView('courseView');document.body.style.overflow='hidden';await applyCourseToFocus(course)},250);
+    };
+  </script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, increment, orderBy, query } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
