@@ -23,6 +23,22 @@
     .course-map{height:330px;border-radius:22px;overflow:hidden;margin-top:18px;border:1px solid var(--line)}.route-cards{display:grid;gap:10px;margin-top:18px}.route-card{width:100%;text-align:left;background:white;border:1px solid var(--line);border-radius:17px;padding:16px;color:var(--navy)}.route-card.active{border:2px solid var(--blue);background:#f4f9ff}.route-card b{display:block;font-size:16px}.route-card small{color:var(--muted);display:block;margin-top:5px}.route-note{font-size:12px;color:var(--muted);margin:10px 2px 0}.secondary{width:100%;margin-top:10px;background:white;border:1px solid var(--blue);color:var(--blue);border-radius:15px;padding:14px;font-weight:700}.route-input{width:100%;min-height:115px;resize:vertical;border:1px solid var(--line);border-radius:14px;padding:13px;line-height:1.65;color:var(--navy)}.search-status{font-size:13px;line-height:1.55;color:var(--muted);margin:12px 0 0}
     dialog{border:0;border-radius:27px;padding:0;box-shadow:0 25px 70px #13223b55;width:min(500px,calc(100% - 32px));color:var(--navy)}dialog::backdrop{background:#14264688}.modal{padding:30px}.modal-head{display:flex;justify-content:space-between;align-items:start}.close{background:#eef4fa;border-radius:50%;width:35px;height:35px;color:var(--navy);font-size:20px}.modal h2{margin:0;font-size:28px;letter-spacing:-2px}.modal p{color:var(--muted);line-height:1.7}.detail-map{height:165px;border-radius:19px;background:linear-gradient(150deg,#e4f4ff,#c2e3ff);position:relative;overflow:hidden;margin:20px 0}.detail-map:after{content:'해수욕장 산책로';position:absolute;left:26px;top:66px;background:white;padding:10px 15px;border-radius:18px;color:var(--blue);font-weight:700}.modal-list{padding:0;list-style:none}.modal-list li{padding:12px 0;border-top:1px solid var(--line);font-size:14px}.modal-list span{color:var(--blue);font-weight:700;margin-right:9px}.option{display:inline-flex;background:white;border:1px solid var(--line);margin:7px 5px 0 0;border-radius:14px;padding:11px 14px;font-size:14px}.option.active{background:var(--blue);color:white;border-color:var(--blue)}
     @media(max-width:760px){.app{padding:22px 18px 50px}header{margin-bottom:30px}.hero{grid-template-columns:1fr;gap:26px}.hero h1{font-size:38px}.map-card{min-height:360px}.courses,.board-list{grid-template-columns:1fr}.board-toolbar{flex-direction:column;align-items:stretch}.tools{grid-template-columns:1fr}.festival{grid-template-columns:1fr;gap:8px}.traffic{justify-self:start}.tool{min-height:230px}.place{padding:9px 13px;font-size:12px}.songjeong{right:42px}.ilgwng{right:18px}.haeundae{right:73px}.gwangalli{right:125px}}
+    /* Registration & preference refresh */
+    .page-view{background:linear-gradient(180deg,#f5f9ff 0%,#fff 42%)}
+    .view-wrap{max-width:820px;padding:24px 20px 76px}
+    .view-wrap h1{font-size:clamp(30px,5vw,42px);line-height:1.12;margin:22px 0 10px}
+    .question,.route-preview{box-shadow:0 12px 32px rgba(40,79,125,.08);border-color:#e5edf8}
+    .question h3{font-size:18px}.choices{gap:9px}
+    .choice{padding:11px 14px;font-weight:700;box-shadow:0 2px 0 rgba(30,62,100,.03)}
+    .choice.active{box-shadow:0 8px 18px rgba(51,136,244,.25)}
+    .course-form label,.course-map+ .route-note{font-weight:700}
+    .route-input{background:#fbfdff;border-color:#dce8f6;padding:15px;font-size:15px}
+    #registerPanel{background:linear-gradient(145deg,#fff,#f2f8ff);border:1px solid #dceafb;padding:24px}
+    #registerTraitPanel{border-top:1px solid #e1ebf7;margin-top:22px;padding-top:2px}
+    #saveCourseButton{position:sticky;bottom:14px;z-index:3;box-shadow:0 14px 28px rgba(51,136,244,.28)}
+    .focus-guide{max-width:920px;margin:0 auto 42px;border:1px solid #dceafb;box-shadow:0 18px 45px rgba(31,74,128,.12)}
+    .focus-actions button{min-height:120px;border-radius:20px;font-size:17px;line-height:1.45;box-shadow:0 10px 24px rgba(47,113,205,.13)}
+    .board-card,.course{box-shadow:0 10px 26px rgba(42,72,112,.07)}
   </style>
 </head>
 <body>
@@ -99,6 +115,34 @@
     function restoreLikes(){document.querySelectorAll('.like').forEach(button=>{const liked=localStorage.getItem(`bacochu-like-${button.dataset.like}`)==='true';if(liked){const number=button.querySelector('span');number.dataset.base=number.textContent;number.textContent=Number(number.textContent)+1;button.classList.add('active');button.childNodes[0].textContent='♥ '}})}restoreLikes();
     function openModal(type){if(type==='filter'){setupFilter();openView('filterView');return}if(type==='share'){openCourseScreen('register');return}title.textContent='바코추 알림';content.innerHTML='<p>축제 일정과 혼잡 예상 시간을 알려드릴 수 있어요. 현재는 알림을 저장하지 않는 화면 데모입니다.</p>';modal.showModal()}
     function searchBeach(){const q=document.getElementById('searchInput').value.trim();const name=Object.keys(beachInfo).find(x=>q.includes(x));name?openBeachMain(name):(title.textContent='검색 결과',content.innerHTML='<p>해운대, 광안리, 송정, 일광, 다대포를 검색해 보세요.</p>',modal.showModal())}
+    /* Public deployment fallback: registrations stay on this device even when a shared database is unavailable. */
+    courseTraitGroups.push(['기본 정보','여성,남성,응답 안 함'],['연령대','10대,20대,30대,40대,50대 이상']);
+    function localRegisteredCourses(){try{return JSON.parse(localStorage.getItem('bacochu-local-registered-courses')||'[]')}catch{return[]}}
+    function saveLocalRegisteredCourses(items){localStorage.setItem('bacochu-local-registered-courses',JSON.stringify(items))}
+    loadCommunityCourses=async function(){
+      const local=localRegisteredCourses();
+      try{
+        const response=await fetch('/api/courses',{cache:'no-store'});
+        const data=await response.json();
+        const remote=Array.isArray(data.courses)?data.courses:[];
+        communityCourses=[...local,...remote.filter(item=>!local.some(saved=>saved.id===item.id))];
+      }catch(error){communityCourses=local}
+      renderMyCourseBoard();renderCommunityBoard();
+    };
+    saveRegisteredCourse=async function(){
+      const status=document.getElementById('searchStatus');
+      if(!window.customStops?.length){status.textContent='먼저 장소를 찾아 경로를 그려주세요.';return}
+      const traits=selectedTraits('registerTraitPanel');
+      if(!traits.length){status.textContent='성향, 성별, 연령대 중 한 가지 이상을 선택해 주세요.';return}
+      const title=document.getElementById('courseNameInput').value.trim()||`${selectedBeachName} 나의 바다 코스`;
+      const course={id:`local-${Date.now()}`,title,meta:window.customStops.map(stop=>stop[0]).join(' · '),stops:window.customStops,traits,likes:0,local:true};
+      const saved=localRegisteredCourses();saved.unshift(course);saveLocalRegisteredCourses(saved);
+      communityCourses=[course,...communityCourses.filter(item=>item.id!==course.id)];
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify([course.id,...myCourseIds()]));
+      renderMyCourseBoard();renderCommunityBoard();
+      status.textContent='등록 완료! 내 코스 목록과 추천 코스에서 바로 확인할 수 있어요.';
+      setTimeout(async()=>{closeView('courseView');document.body.style.overflow='hidden';await applyCourseToFocus(course)},350);
+    };
   </script>
 </body>
 </html>
