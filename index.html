@@ -590,6 +590,24 @@
   </script>
   <script src="/sync.js?v=shared-likes-7"></script>
   <script>
+    window.translateCourseAndBeachNames=function(lang){
+      var dictionaries={
+        en:{'\uad11\uc548\ub9ac \ud574\uc218\uc695\uc7a5':'Gwangalli Beach','\uc1a1\uc815 \ud574\uc218\uc695\uc7a5':'Songjeong Beach','\ud574\uc6b4\ub300 \ud574\uc218\uc695\uc7a5':'Haeundae Beach','\ub2e4\ub300\ud3ec \ud574\uc218\uc695\uc7a5':'Dadaepo Beach','\uc77c\uad11 \ud574\uc218\uc695\uc7a5':'Ilgwang Beach','\uc784\ub791 \ud574\uc218\uc695\uc7a5':'Imrang Beach','\uad11\uc548\ub9ac':'Gwangalli','\uc1a1\uc815':'Songjeong','\ud574\uc6b4\ub300':'Haeundae','\ub2e4\ub300\ud3ec':'Dadaepo','\uc77c\uad11':'Ilgwang','\uc784\ub791':'Imrang','\ucf54\uc2a4':'Course','\ud574\uc218\uc695\uc7a5':'Beach'},
+        ja:{'\uad11\uc548\ub9ac \ud574\uc218\uc695\uc7a5':'\u5e83\u5b89\u91cc\u6d77\u6c34\u6d74\u5834','\uc1a1\uc815 \ud574\uc218\uc695\uc7a5':'\u677e\u4ead\u6d77\u6c34\u6d74\u5834','\ud574\uc6b4\ub300 \ud574\uc218\uc695\uc7a5':'\u6d77\u96f2\u53f0\u6d77\u6c34\u6d74\u5834','\ub2e4\ub300\ud3ec \ud574\uc218\uc695\uc7a5':'\u591a\u5927\u6d66\u6d77\u6c34\u6d74\u5834','\uad11\uc548\ub9ac':'\u5e83\u5b89\u91cc','\uc1a1\uc815':'\u677e\u4ead','\ud574\uc6b4\ub300':'\u6d77\u96f2\u53f0','\ub2e4\ub300\ud3ec':'\u591a\u5927\u6d66','\uc77c\uad11':'\u65e5\u5149','\uc784\ub791':'\u6797\u6d6a','\ucf54\uc2a4':'\u30b3\u30fc\u30b9','\ud574\uc218\uc695\uc7a5':'\u6d77\u6c34\u6d74\u5834'},
+        zh:{'\uad11\uc548\ub9ac \ud574\uc218\uc695\uc7a5':'\u5e7f\u5b89\u91cc\u6d77\u6ee9','\uc1a1\uc815 \ud574\uc218\uc695\uc7a5':'\u677e\u4ead\u6d77\u6ee9','\ud574\uc6b4\ub300 \ud574\uc218\uc695\uc7a5':'\u6d77\u4e91\u53f0\u6d77\u6ee9','\ub2e4\ub300\ud3ec \ud574\uc218\uc695\uc7a5':'\u591a\u5927\u6d66\u6d77\u6ee9','\uad11\uc548\ub9ac':'\u5e7f\u5b89\u91cc','\uc1a1\uc815':'\u677e\u4ead','\ud574\uc6b4\ub300':'\u6d77\u4e91\u53f0','\ub2e4\ub300\ud3ec':'\u591a\u5927\u6d66','\uc77c\uad11':'\u65e5\u5149','\uc784\ub791':'\u6797\u6d6a','\ucf54\uc2a4':'\u8def\u7ebf','\ud574\uc218\uc695\uc7a5':'\u6d77\u6ee9'}
+      };
+      var words=dictionaries[lang]||{};
+      window.__bacochuOriginalText=window.__bacochuOriginalText||new WeakMap();
+      document.querySelectorAll('body *:not(script):not(style):not(option)').forEach(function(element){
+        Array.prototype.forEach.call(element.childNodes,function(node){
+          if(node.nodeType!==3)return;
+          if(!window.__bacochuOriginalText.has(node))window.__bacochuOriginalText.set(node,node.nodeValue);
+          var text=window.__bacochuOriginalText.get(node);
+          Object.keys(words).sort(function(a,b){return b.length-a.length}).forEach(function(word){text=text.split(word).join(words[word])});
+          node.nodeValue=text;
+        });
+      });
+    };
     window.changeAppLanguage=function(lang){
       var copy={
         ko:{sub:'\ubd80\uc0b0 \ubc14\ub2e4 \ucf54\uc2a4 \ucd94\ucc9c',eyebrow:'BUSAN BEACH GUIDE',hero:'\ubd80\uc0b0 \ubc14\ub2e4,<br>\uc5b4\ub514\ub85c \ub5a0\ub098\ubcfc\uae4c\uc694?',picker:'\uc5b4\ub290 \ubc14\ub2e4\ub85c \uac00\ubcfc\uae4c\uc694?'},
@@ -599,6 +617,7 @@
       }[lang]||{};
       document.documentElement.lang=lang;
       if(copy.sub){document.querySelector('.brand small').textContent=copy.sub;document.querySelector('.eyebrow').textContent=copy.eyebrow;document.querySelector('.hero h1').innerHTML=copy.hero;document.querySelector('.beach-picker>b').textContent=copy.picker;}
+      translateCourseAndBeachNames(lang);
       try{localStorage.setItem('bacochu-language',lang)}catch(error){}
     };
     (function(){try{var saved=localStorage.getItem('bacochu-language')||'ko';var select=document.getElementById('languageSelect');if(select){select.value=saved;changeAppLanguage(saved)}}catch(error){}})();
