@@ -252,7 +252,7 @@
     };
     window.openBoardCourseDetail=function(id){const course=communityCourses.find(item=>item.id===id);if(course)window.showCourseDetail(course)};
     window.showRecommendedDetail=function(id){const course=activeCourses[id]||routes[id];if(course)window.showCourseDetail(course)};
-    courseCard=function(course,owned=false){return `<article class="board-card"><b>${course.title}</b><small>${course.meta}</small><p style="margin:10px 0;color:#5d7292;font-size:13px">${shortReview(course)}</p><div class="board-meta"><span>📍 ${course.stops?.length||0}곳</span><span>·</span><span>🏷️ ${(course.traits||[]).slice(0,3).join(' · ')||'바다 여행'}</span></div><div class="board-actions"><button class="like" onclick="window.openBoardCourseDetail('${course.id}')">코스 자세히</button><button class="like" onclick="window.toggleCourseLike('${course.id}')">♥ ${course.likes||0}</button>${owned?`<button class="like" onclick="deleteMyCourse('${course.id}')">삭제</button>`:''}</div></article>`};
+    courseCard=function(course,owned=false){return `<article class="board-card" data-course-id="${course.id}"><b>${course.title}</b><small>${course.meta}</small><p style="margin:10px 0;color:#5d7292;font-size:13px">${shortReview(course)}</p><div class="board-meta"><span>📍 ${course.stops?.length||0}곳</span><span>·</span><span>🏷️ ${(course.traits||[]).slice(0,3).join(' · ')||'바다 여행'}</span></div><div class="board-actions"><button class="like" onclick="window.openBoardCourseDetail('${course.id}')">코스 자세히</button><button class="like" onclick="window.toggleCourseLike('${course.id}')">♥ ${course.likes||0}</button>${owned?`<button class="like" onclick="deleteMyCourse('${course.id}')">삭제</button>`:''}</div></article>`};
     const selectRouteWithDetail=selectRoute;
     selectRoute=function(id){selectRouteWithDetail(id);const preview=document.getElementById('routePreview');if(preview&&activeCourses[id])preview.insertAdjacentHTML('beforeend',`<button class="secondary" onclick="window.showRecommendedDetail('${id}')">이 코스 자세히 보기</button>`)};
   </script>
@@ -358,7 +358,7 @@
       localStorage.setItem('bacochu-course-like-counts',JSON.stringify(counts));localStorage.setItem(key,String(!liked));
       course.likes=counts[id];renderCommunityBoard();renderMyCourseBoard();
     };
-    courseCard=function(course,owned=false){const likes=courseLikeCount(course);return `<article class="board-card"><b>${course.title}</b><small>${course.meta}</small><p style="margin:10px 0;color:#5d7292;font-size:13px">${shortReview(course)}</p><div class="board-meta"><span>📍 ${course.stops?.length||0}곳</span><span>·</span><span>🏷️ ${(course.traits||[]).slice(0,3).join(' · ')||'바다 여행'}</span></div><div class="board-actions"><button class="like" onclick="window.openBoardCourseDetail('${course.id}')">코스 자세히</button><button class="like" onclick="window.toggleCourseLike('${course.id}')">♥ ${likes}</button>${owned?`<button class="like" onclick="deleteMyCourse('${course.id}')">삭제</button>`:''}</div></article>`};
+    courseCard=function(course,owned=false){const likes=courseLikeCount(course);return `<article class="board-card" data-course-id="${course.id}"><b>${course.title}</b><small>${course.meta}</small><p style="margin:10px 0;color:#5d7292;font-size:13px">${shortReview(course)}</p><div class="board-meta"><span>📍 ${course.stops?.length||0}곳</span><span>·</span><span>🏷️ ${(course.traits||[]).slice(0,3).join(' · ')||'바다 여행'}</span></div><div class="board-actions"><button class="like" onclick="window.openBoardCourseDetail('${course.id}')">코스 자세히</button><button class="like" onclick="window.toggleCourseLike('${course.id}')">♥ ${likes}</button>${owned?`<button class="like" onclick="deleteMyCourse('${course.id}')">삭제</button>`:''}</div></article>`};
     const savedRegister=window.registerCourseNow;
     window.registerCourseNow=async function(){
       await savedRegister();
@@ -408,6 +408,44 @@
       communityCourses=communityCourses.filter(course=>course.id!==id);
       renderMyCourseBoard();renderCommunityBoard();
     };
+  </script>
+  <script type="module">
+    /* Runs after all earlier scripts: one reliable path for save and delete. */
+    const storageKeys=['bacochu-my-courses','bacochu-local-registered-courses'];
+    const readCourses=key=>{try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return[]}};
+    const writeCourses=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
+    window.registerCourseReliable=function(){
+      const status=document.getElementById('searchStatus');
+      const stops=window.customStops;
+      if(!Array.isArray(stops)||stops.length<2){status.textContent='먼저 장소를 찾고 경로를 그려주세요.';return;}
+      const traits=[...document.querySelectorAll('#registerTraitPanel .choice.active')].map(item=>item.textContent);
+      if(!traits.length){status.textContent='여행 성향을 한 가지 이상 선택해 주세요.';return;}
+      const title=document.getElementById('courseNameInput').value.trim()||'나의 바다 코스';
+      const course={id:`mine-${Date.now()}`,title,meta:stops.map(stop=>stop[0]).join(' · '),stops,traits,likes:0};
+      const current=readCourses('bacochu-my-courses').filter(item=>item.id!==course.id);
+      writeCourses('bacochu-my-courses',[course,...current]);
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify([course.id,...JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]')]));
+      document.getElementById('courseNameInput').value='';document.getElementById('placeInput').value='';window.customStops=null;
+      status.textContent='코스를 등록했어요.';
+      setTimeout(()=>location.reload(),250);
+    };
+    window.deleteCourseReliable=function(id){
+      if(!id||!confirm('이 코스를 삭제할까요?'))return;
+      storageKeys.forEach(key=>writeCourses(key,readCourses(key).filter(course=>course.id!==id)));
+      const ids=JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]').filter(savedId=>savedId!==id);
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify(ids));
+      location.reload();
+    };
+    document.addEventListener('click',event=>{
+      const target=event.target.closest('button');if(!target)return;
+      if(target.id==='saveCourseButton'){
+        event.preventDefault();event.stopImmediatePropagation();window.registerCourseReliable();return;
+      }
+      if(target.textContent.trim()==='삭제'){
+        const id=target.closest('[data-course-id]')?.dataset.courseId;
+        if(id){event.preventDefault();event.stopImmediatePropagation();window.deleteCourseReliable(id);}
+      }
+    },true);
   </script>
 </body>
 </html>
