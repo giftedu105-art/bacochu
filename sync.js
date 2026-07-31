@@ -116,6 +116,17 @@
     window.saveRegisteredCourse = saveShared;
     window.deleteMyCourse = deleteShared;
     window.deleteCourseReliable = deleteShared;
+    if (!window.__sharedSaveCaptureInstalled) {
+      window.__sharedSaveCaptureInstalled = true;
+      window.addEventListener('click', function (event) {
+        var target = event.target && event.target.closest ? event.target.closest('button') : null;
+        if (target && target.id === 'saveCourseButton') {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          saveShared();
+        }
+      }, true);
+    }
     document.documentElement.dataset.sharedSync = 'bound';
     loadShared();
   }
