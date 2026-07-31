@@ -145,5 +145,57 @@
       setTimeout(async()=>{closeView('courseView');document.body.style.overflow='hidden';await applyCourseToFocus(course)},350);
     };
   </script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, increment, orderBy, query } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+
+    const firebaseApp = initializeApp({
+      apiKey: 'AIzaSyDjhg7tspyih6Esk0290zC8Boxm9PSDBnI',
+      authDomain: 'bacochu-585cd.firebaseapp.com',
+      projectId: 'bacochu-585cd',
+      storageBucket: 'bacochu-585cd.firebasestorage.app',
+      messagingSenderId: '508690185957',
+      appId: '1:508690185957:web:fe74a860a99eb043015e0c'
+    });
+    const sharedDb = getFirestore(firebaseApp);
+    const sharedCourses = collection(sharedDb, 'courses');
+
+    window.loadCommunityCourses = async function(){
+      try{
+        const snapshot = await getDocs(query(sharedCourses, orderBy('createdAt','desc')));
+        communityCourses = snapshot.docs.map(item => ({id:item.id,...item.data()}));
+      }catch(error){ communityCourses = localRegisteredCourses(); }
+      renderMyCourseBoard(); renderCommunityBoard();
+    };
+
+    window.saveRegisteredCourse = async function(){
+      const status=document.getElementById('searchStatus');
+      if(!window.customStops?.length){status.textContent='먼저 장소를 찾아 경로를 그려주세요.';return}
+      const traits=selectedTraits('registerTraitPanel');
+      if(!traits.length){status.textContent='성향, 성별, 연령대 중 한 가지 이상을 선택해 주세요.';return}
+      const course={title:document.getElementById('courseNameInput').value.trim()||`${selectedBeachName} 나의 바다 코스`,meta:window.customStops.map(stop=>stop[0]).join(' · '),stops:window.customStops,traits,likes:0,createdAt:Date.now()};
+      try{
+        const saved=await addDoc(sharedCourses,course); course.id=saved.id;
+        communityCourses=[course,...communityCourses];
+        localStorage.setItem('bacochu-my-course-ids',JSON.stringify([course.id,...myCourseIds()]));
+        renderMyCourseBoard(); renderCommunityBoard(); status.textContent='등록 완료! 이제 모든 여행자에게 이 코스가 보여요.';
+        setTimeout(async()=>{closeView('courseView');document.body.style.overflow='hidden';await applyCourseToFocus(course)},350);
+      }catch(error){ status.textContent='공유 저장에 실패했어요. 잠시 후 다시 시도해 주세요.'; }
+    };
+
+    window.likeCommunityCourse = async function(id){
+      const target=communityCourses.find(item=>item.id===id); if(!target)return;
+      await updateDoc(doc(sharedDb,'courses',id),{likes:increment(1)});
+      target.likes=(target.likes||0)+1; renderCommunityBoard();
+    };
+    window.deleteMyCourse = async function(id){
+      if(!confirm('이 코스를 삭제할까요?'))return;
+      await deleteDoc(doc(sharedDb,'courses',id));
+      communityCourses=communityCourses.filter(item=>item.id!==id);
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify(myCourseIds().filter(item=>item!==id)));
+      renderMyCourseBoard();renderCommunityBoard();
+    };
+    window.loadCommunityCourses();
+  </script>
 </body>
 </html>
