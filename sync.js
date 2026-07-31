@@ -64,6 +64,11 @@
       }).filter(Boolean);
       document.documentElement.dataset.sharedSync = 'ready';
       renderRemote(remote);
+      try {
+        if (typeof courseMode !== 'undefined' && courseMode === 'apply' && typeof setupCourse === 'function') {
+          setTimeout(function () { setupCourse(); }, 0);
+        }
+      } catch (error) {}
     } catch (error) {
       document.documentElement.dataset.sharedSync = 'read-failed';
     }
@@ -116,6 +121,7 @@
     window.saveRegisteredCourse = saveShared;
     window.deleteMyCourse = deleteShared;
     window.deleteCourseReliable = deleteShared;
+    window.loadCommunityCourses = loadShared;
     if (!window.__sharedSaveCaptureInstalled) {
       window.__sharedSaveCaptureInstalled = true;
       window.addEventListener('click', function (event) {
