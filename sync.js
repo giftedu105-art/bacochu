@@ -211,6 +211,23 @@
       }
     };
   }
+  function installMultiTraitSelection() {
+    window.toggleCourseTrait = function (button, target) {
+      button.classList.toggle('active');
+      if (target === 'applyTraits') {
+        try { localStorage.setItem('bacochu-viewer-traits', JSON.stringify(selectedTraits(target))); } catch (error) {}
+        if (typeof setupCourse === 'function') setupCourse();
+        var cards = document.getElementById('routeCards');
+        if (cards) cards.style.display = 'grid';
+      }
+    };
+    window.toggleChoice = function (button) {
+      button.classList.toggle('active');
+      var active = Array.prototype.map.call(document.querySelectorAll('#filterView .choice.active'), function (item) { return item.textContent; });
+      var recommendation = document.getElementById('recommendation');
+      if (recommendation) recommendation.textContent = active.length ? active.join(' \u00b7 ') : '\uc131\ud5a5\uc744 \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.';
+    };
+  }
   window.addEventListener('load', function () { setTimeout(bind, 300); });
-  setTimeout(function () { bind(); installBeachRecommendationFilter(); }, 1200);
+  setTimeout(function () { bind(); installBeachRecommendationFilter(); installMultiTraitSelection(); }, 1200);
 }());
