@@ -388,6 +388,22 @@
       window.customStops=null;
     };
     document.getElementById('saveCourseButton').onclick=()=>window.registerCourseNow();
+
+    /* Delete removes the same course from every older local save format too. */
+    deleteMyCourse=async function(id){
+      if(!confirm('이 코스를 삭제할까요?'))return;
+      ['bacochu-my-courses','bacochu-local-registered-courses'].forEach(key=>{
+        try{
+          const remaining=JSON.parse(localStorage.getItem(key)||'[]').filter(course=>course.id!==id);
+          localStorage.setItem(key,JSON.stringify(remaining));
+        }catch{localStorage.removeItem(key)}
+      });
+      localStorage.setItem('bacochu-my-course-ids',JSON.stringify(myCourseIds().filter(savedId=>savedId!==id)));
+      const likes=savedLikeCounts();delete likes[id];localStorage.setItem('bacochu-course-like-counts',JSON.stringify(likes));
+      localStorage.removeItem(`bacochu-liked-course-${id}`);
+      communityCourses=communityCourses.filter(course=>course.id!==id);
+      renderMyCourseBoard();renderCommunityBoard();
+    };
   </script>
 </body>
 </html>
