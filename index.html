@@ -39,6 +39,10 @@
     .focus-guide{max-width:920px;margin:0 auto 42px;border:1px solid #dceafb;box-shadow:0 18px 45px rgba(31,74,128,.12)}
     .focus-actions button{min-height:120px;border-radius:20px;font-size:17px;line-height:1.45;box-shadow:0 10px 24px rgba(47,113,205,.13)}
     .board-card,.course{box-shadow:0 10px 26px rgba(42,72,112,.07)}
+    .page-view{z-index:99999!important;width:100vw;height:100dvh;min-height:100vh;overscroll-behavior:contain;background:#f7fbff!important}
+    .page-view.active{display:block!important;animation:fullScreenIn .18s ease-out}
+    .app.screen-hidden{display:none!important}
+    @keyframes fullScreenIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
@@ -115,6 +119,28 @@
     function restoreLikes(){document.querySelectorAll('.like').forEach(button=>{const liked=localStorage.getItem(`bacochu-like-${button.dataset.like}`)==='true';if(liked){const number=button.querySelector('span');number.dataset.base=number.textContent;number.textContent=Number(number.textContent)+1;button.classList.add('active');button.childNodes[0].textContent='♥ '}})}restoreLikes();
     function openModal(type){if(type==='filter'){setupFilter();openView('filterView');return}if(type==='share'){openCourseScreen('register');return}title.textContent='바코추 알림';content.innerHTML='<p>축제 일정과 혼잡 예상 시간을 알려드릴 수 있어요. 현재는 알림을 저장하지 않는 화면 데모입니다.</p>';modal.showModal()}
     function searchBeach(){const q=document.getElementById('searchInput').value.trim();const name=Object.keys(beachInfo).find(x=>q.includes(x));name?openBeachMain(name):(title.textContent='검색 결과',content.innerHTML='<p>해운대, 광안리, 송정, 일광, 다대포를 검색해 보세요.</p>',modal.showModal())}
+    openView=function(id){document.querySelector('.app').classList.add('screen-hidden');document.getElementById(id).classList.add('active');document.body.style.overflow='hidden';window.scrollTo(0,0)};
+    closeView=function(id){document.getElementById(id).classList.remove('active');if(!document.getElementById('beachFocus').classList.contains('active'))document.querySelector('.app').classList.remove('screen-hidden');document.body.style.overflow=''};
+    closeBeachMain=function(){document.getElementById('beachFocus').classList.remove('active');document.querySelector('.app').classList.remove('screen-hidden');document.body.style.overflow=''};
+    function segmentSummary(legs=[]){return legs.map((leg,index)=>`<div class="route-step"><span>${index+1}</span><b>${leg.from} → ${leg.to}</b><small style="display:block;margin:4px 0 0 33px;color:#738098">도보 ${(leg.distance/1000).toFixed(1)}km · 약 ${Math.max(1,Math.round(leg.duration/60))}분</small></div>`).join('')}
+    drawWalkingRoute=async function(stops){try{const payload=stops.map(s=>({name:s[0],lat:s[1],lon:s[2]}));const response=await fetch(`/api/walk-route?stops=${encodeURIComponent(JSON.stringify(payload))}`);const data=await response.json();if(!response.ok)throw new Error(data.error||'도보 경로를 찾지 못했습니다.');drawRoute(stops,data.points||[]);return `${routeSummary(data.distance,data.duration)}<div class="route-preview" style="margin-top:14px"><b>구간별 도보 안내</b>${segmentSummary(data.legs)}</div>`}catch(error){drawRoute(stops,[]);return `<p class="search-status" style="color:#dc5c4d">${error.message} 장소 위치는 표시했어요.</p>`}}
+    applyCourseToFocus=async function(r){const guide=document.querySelector('.focus-guide p');guide.textContent='사람이 걸을 수 있는 길을 따라 경로를 만드는 중이에요…';try{const payload=r.stops.map(s=>({name:s[0],lat:s[1],lon:s[2]}));const response=await fetch(`/api/walk-route?stops=${encodeURIComponent(JSON.stringify(payload))}`);const data=await response.json();if(!response.ok)throw new Error(data.error||'도보 경로를 찾지 못했습니다.');drawFocusRoute(r.stops,data.points||[]);guide.innerHTML=`${r.title} · 총 ${(data.distance/1000).toFixed(1)}km · 약 ${Math.max(1,Math.round(data.duration/60))}분<br><span style="display:block;margin-top:8px;font-size:13px">${data.legs.map(leg=>`${leg.from} → ${leg.to}: 약 ${Math.max(1,Math.round(leg.duration/60))}분`).join('<br>')}</span>`}catch(error){drawFocusRoute(r.stops,[]);guide.textContent=`${r.title} · ${error.message}`}}
+    /* Search is biased to the beach that the traveller chose first. */
+    const openBeachMainWithArea = openBeachMain;
+    openBeachMain = function(name){
+      const beach=beachInfo[name];
+      if(beach) window.selectedBeachCenter={lat:beach[3],lon:beach[4],name:beach[0]};
+      return openBeachMainWithArea(name);
+    };
+    findKakaoPlace = async function(name){
+      const center=window.selectedBeachCenter||{lat:35.1796,lon:129.0756};
+      const params=new URLSearchParams({q:name,x:center.lon,y:center.lat});
+      const response=await fetch(`/api/place-search?${params}`,{cache:'no-store'});
+      const data=await response.json();
+      if(!response.ok||!data.places?.length)throw new Error(data.error||'장소를 찾지 못했습니다.');
+      const place=data.places[0];
+      return {place_name:place.name,y:String(place.lat),x:String(place.lon)};
+    };
     /* Public deployment fallback: registrations stay on this device even when a shared database is unavailable. */
     filterData.push(['기본 정보','여성,남성,응답 안 함'],['연령대','10대,20대,30대,40대,50대 이상']);
     courseTraitGroups.push(['기본 정보','여성,남성,응답 안 함'],['연령대','10대,20대,30대,40대,50대 이상']);
