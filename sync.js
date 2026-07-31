@@ -131,15 +131,36 @@
     loadShared();
   }
   function normalize(value) { return String(value || '').replace(/\s+/g, '').toLowerCase(); }
+  function beachCode(value) {
+    var text = normalize(value);
+    var aliases = [
+      ['gwang', '\uad11\uc548\ub9ac'], ['song', '\uc1a1\uc815'], ['haeun', '\ud574\uc6b4\ub300'],
+      ['dadae', '\ub2e4\ub300\ud3ec'], ['ilgw', '\uc77c\uad11'], ['imm', '\uc784\ub791']
+    ];
+    for (var i = 0; i < aliases.length; i += 1) {
+      if (text.indexOf(normalize(aliases[i][1])) !== -1) return aliases[i][0];
+    }
+    return '';
+  }
+  function currentBeachCode() {
+    var current = '';
+    try { if (typeof selectedBeachName !== 'undefined') current = selectedBeachName; } catch (error) {}
+    if (!current) current = window.selectedBeachName || '';
+    if (!current) {
+      var title = document.getElementById('courseTitle');
+      var focus = document.getElementById('focusName');
+      current = (title && title.textContent) || (focus && focus.textContent) || '';
+    }
+    return beachCode(current);
+  }
   function belongsToCurrentBeach(course) {
-    var selected = normalize(window.selectedBeachName);
-    if (!selected) return true;
-    var fields = [course && course.beach, course && course.title, course && course.meta,
-      course && course.stops && course.stops[0] ? course.stops[0][0] : ''];
-    return fields.some(function (field) {
-      var value = normalize(field);
-      return value && (value.indexOf(selected) !== -1 || selected.indexOf(value) !== -1);
-    });
+    var selected = currentBeachCode();
+    if (!selected) return false;
+    var fields = [course && course.beach, course && course.title, course && course.meta];
+    if (course && Array.isArray(course.stops)) {
+      course.stops.forEach(function (stop) { fields.push(stop && stop[0]); });
+    }
+    return fields.some(function (field) { return beachCode(field) === selected; });
   }
   function isUsableCourse(course) {
     return !!(course && typeof course.title === 'string' && course.title.trim() &&
