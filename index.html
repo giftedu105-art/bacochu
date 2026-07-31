@@ -45,6 +45,8 @@
     @keyframes fullScreenIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
     /* Prevent a closed full-screen layer from sitting invisibly over buttons. */
     .page-view:not(.active),.beach-focus:not(.active){display:none!important;pointer-events:none!important}
+    /* Course screens must sit above the full-screen beach layer. */
+    .page-view.active{z-index:1000001!important;pointer-events:auto!important}
     .beach-focus.active{display:block!important;pointer-events:auto!important}
     .focus-guide,.focus-actions,.focus-actions button,.board-actions,.board-actions button{position:relative!important;z-index:1000000!important;pointer-events:auto!important}
   </style>
