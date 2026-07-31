@@ -232,7 +232,7 @@
     window.toggleCourseLike = async function (id) {
       var course = (communityCourses || []).find(function (item) { return item.id === id; });
       if (!course || !id) return;
-      var flag = 'bacochu-liked-course-' + id;
+      var flag = 'bacochu-shared-liked-course-' + id;
       var liked = localStorage.getItem(flag) === 'true';
       var nextLikes = Math.max(0, Number(course.likes || 0) + (liked ? -1 : 1));
       var updated = Object.assign({}, course, { likes: nextLikes });
