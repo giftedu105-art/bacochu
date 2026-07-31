@@ -50,6 +50,7 @@
     .page-view.active{z-index:1000001!important;pointer-events:auto!important}
     .beach-focus.active{display:block!important;pointer-events:auto!important}
     .focus-guide,.focus-actions,.focus-actions button,.board-actions,.board-actions button{position:relative!important;z-index:1000000!important;pointer-events:auto!important}
+    .focus-map{height:min(52vh,500px)!important;min-height:340px!important}
   </style>
 </head>
 <body>
@@ -486,7 +487,13 @@
         const mine=JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]');localStorage.setItem('bacochu-my-course-ids',JSON.stringify([saved.id,...mine.filter(id=>id!==saved.id)]));
         document.getElementById('courseNameInput').value='';document.getElementById('placeInput').value='';window.customStops=null;
         status.textContent='공용 게시판에 등록했어요.';setTimeout(()=>location.reload(),350);
-      }catch(error){status.textContent='공용 저장에 실패했어요. 잠시 후 다시 시도해 주세요.';}
+      }catch(error){
+        const fallback={id:`mine-${Date.now()}`,...course};
+        const saved=JSON.parse(localStorage.getItem('bacochu-my-courses')||'[]');
+        localStorage.setItem('bacochu-my-courses',JSON.stringify([fallback,...saved]));
+        localStorage.setItem('bacochu-my-course-ids',JSON.stringify([fallback.id,...JSON.parse(localStorage.getItem('bacochu-my-course-ids')||'[]')]));
+        status.textContent='내 코스를 저장했어요. 공용 저장은 잠시 후 다시 연결됩니다.';setTimeout(()=>location.reload(),350);
+      }
     };
     window.deleteCourseReliable=async function(id){
       if(!id||!confirm('이 코스를 삭제할까요?'))return;
@@ -502,6 +509,7 @@
       }
     };
     window.deleteMyCourse=window.deleteCourseReliable;
+    document.querySelectorAll('.beach-option').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>{const focus=document.getElementById('beachFocus');focus.scrollTop=0;window.scrollTo(0,0)},0)));
   </script>
 </body>
 </html>
