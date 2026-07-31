@@ -201,7 +201,7 @@
       cards.style.display = 'grid';
       cards.innerHTML = candidates.length ? candidates.map(function (entry, index) {
         var title = (index === 0 ? '\u0031\uc21c\uc704 \u00b7 ' : '') + entry.course.title;
-        return '<button class="route-card" data-route="' + entry.id + '" onclick="selectRoute(\'' + entry.id + '\')"><b>' + title + '</b><small>' + entry.course.meta + ' \u00b7 \uc131\ud5a5 \uc77c\uce58 ' + score(entry.course) + '\uac1c</small></button>';
+        return '<div style="display:grid;gap:7px"><button class="route-card" data-route="' + entry.id + '" onclick="selectRoute(\'' + entry.id + '\')"><b>' + title + '</b><small>' + entry.course.meta + ' \u00b7 \uc131\ud5a5 \uc77c\uce58 ' + score(entry.course) + '\uac1c</small></button><button class="like" style="justify-self:start" onclick="window.showRecommendedDetail(\'' + entry.id + '\')">\ucf54\uc2a4 \uc790\uc138\ud788</button></div>';
       }).join('') : '<p style="margin:0;color:#738098">\uc774 \ud574\uc218\uc695\uc7a5\uc5d0 \ub4f1\ub85d\ub41c \ucf54\uc2a4\uac00 \uc544\uc9c1 \uc5c6\uc5b4\uc694.</p>';
       if (candidates.length) {
         currentRouteId = candidates[0].id;
